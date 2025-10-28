@@ -1,9 +1,6 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
+// -------------------------
+// Prisma Configuration
+// -------------------------
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -14,23 +11,98 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
+// -------------------------
+// User Authentication & RBAC Models
+// -------------------------
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      String   @default("tenant")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String           @id @default(uuid())
+  email          String           @unique
+  password       String?          // nullable for OAuth users
+  isEmailVerified Boolean          @default(false)
+  name           String?
+  roles          UserRole[]       // many-to-many relationship
+  refreshTokens  RefreshToken[]
+  oauthAccounts  OAuthAccount[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
 
+model Role {
+  id          String        @id @default(uuid())
+  name        String        @unique
+  description String?
+  permissions RolePermission[]
+  users       UserRole[]
+}
+
+model Permission {
+  id   String  @id @default(uuid())
+  name String  @unique
+  roles RolePermission[]
+}
+
+// -------------------------
+// Join Tables
+// -------------------------
+
+model UserRole {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId String
+}
+
+model RolePermission {
+  id            String      @id @default(uuid())
+  role          Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId        String
+  permission    Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permissionId  String
+}
+
+// -------------------------
+// Auth Tokens
+// -------------------------
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  tokenHash  String   // hashed securely
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+}
+
+// -------------------------
+// One-Time Password (Ephemeral)
+// -------------------------
+
+model OTP {
+  id         String   @id @default(uuid())
+  email      String
+  code       String   // always store hashed (bcrypt)
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  used       Boolean  @default(false)
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+// -------------------------
+// OAuth Provider Accounts
+// -------------------------
+
+model OAuthAccount {
+  id            String   @id @default(uuid())
+  provider      String
+  providerId    String
+  accessToken   String?
+  refreshToken  String?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+
+  @@unique([provider, providerId])
+}
