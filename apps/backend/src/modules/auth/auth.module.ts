@@ -7,7 +7,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OtpModule } from '../otp/otp.module';
 
-
 @Module({
   imports: [
     OtpModule,
@@ -19,7 +18,7 @@ import { OtpModule } from '../otp/otp.module';
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET') || 'default_secret',
-        signOptions: { expiresIn: '15m' },  
+        signOptions: { expiresIn: '15m' },
       }),
     }),
   ],

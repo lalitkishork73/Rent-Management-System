@@ -15,7 +15,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly otpService: OtpService,
-    private logger: AppLogger,
+    private readonly logger: AppLogger,
   ) {}
 
   async signUp(email: string, password: string) {

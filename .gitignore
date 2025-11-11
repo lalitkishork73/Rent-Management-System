@@ -178,3 +178,5 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 >>>>>>> 8ef3225c47dd6ccab51955c120a30b49f3a6b62a
+
+.early.coverage

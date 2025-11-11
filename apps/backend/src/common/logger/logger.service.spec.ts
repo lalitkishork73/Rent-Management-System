@@ -1,20 +1,26 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { LoggerService } from './logger.service';
+import { AppLogger } from './logger.service';
+import { Logger } from '@nestjs/common';
 
 describe('LoggerService', () => {
-  let service: LoggerService;
+  let service: AppLogger;
+  let logSpy: jest.SpyInstance;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [LoggerService],
+      providers: [AppLogger],
     }).compile();
 
-    service = module.get<LoggerService>(LoggerService);
+    service = module.get<AppLogger>(AppLogger);
+    logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
   });
 
-    it('should return formatted log message', () => {
-      const result = service.log('Hello Dost');
-      expect(result).toBe('[LOG] Hello Dost');
-    });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
 
+  it('should log message using NestJS Logger', () => {
+    service.log('Hello Dost');
+    expect(logSpy).toHaveBeenCalledWith('Hello Dost');
+  });
 });

@@ -12,14 +12,11 @@ export class MailUtil {
     },
   });
 
-  
-
   static async sendMail(
     to: string,
     subject: string,
     html: string,
   ): Promise<void> {
-   
     await this.transporter.sendMail({
       from: `"Rent Management" <${process.env.MAIL_USER}>`,
       to,

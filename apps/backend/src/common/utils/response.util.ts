@@ -14,8 +14,12 @@ export const errorResponse = (message: string, error: any = {}) => {
   };
 };
 
-
-export const paginateResponse = (items: any[], total: number, page: number, limit: number) => {
+export const paginateResponse = (
+  items: any[],
+  total: number,
+  page: number,
+  limit: number,
+) => {
   const totalPages = Math.ceil(total / limit);
 
   return {
@@ -31,4 +35,3 @@ export const paginateResponse = (items: any[], total: number, page: number, limi
     message: 'Data fetched successfully',
   };
 };
-
