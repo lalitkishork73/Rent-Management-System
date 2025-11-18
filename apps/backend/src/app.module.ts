@@ -9,6 +9,7 @@ import { OtpModule } from './modules/otp/otp.module';
 import { LoggerModule } from './common/logger/logger.module';
 import { RedisModule } from './common/redis/redis.provider';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 
 @Module({
   imports: [
@@ -27,6 +28,12 @@ import { ThrottlerModule } from '@nestjs/throttler';
         },
       ],
     }),
+    PrometheusModule.register({
+      path:'/metrics',
+      defaultMetrics:{
+        enabled:true
+      }
+    })
   ],
   controllers: [AppController],
   providers: [AppService],

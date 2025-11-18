@@ -9,17 +9,17 @@ import Redis from 'ioredis';
 
 @Injectable()
 export class OtpService {
-  private otpExpiresSeconds = Number(process.env.OTP_EXPIRES_SECONDS) || 300;
-  private rateLimit = Number(process.env.OTP_RATE_LIMIT) || 5;
-  private rateWindow = Number(process.env.OTP_RATE_WINDOW) || 3600;
+  private readonly otpExpiresSeconds = Number(process.env.OTP_EXPIRES_SECONDS) || 300;
+  private readonly rateLimit = Number(process.env.OTP_RATE_LIMIT) || 5;
+  private readonly rateWindow = Number(process.env.OTP_RATE_WINDOW) || 3600;
 
   constructor(
     @Inject('REDIS') private readonly redisClint: Redis,
     private readonly prisma: PrismaService,
   ) {}
 
-  private otpKey = (email: string) => `otp:${email.toLowerCase()}`;
-  private rateKey = (email: string) => `otp:rate:${email.toLowerCase()}`;
+  private readonly otpKey = (email: string) => `otp:${email.toLowerCase()}`;
+  private readonly rateKey = (email: string) => `otp:rate:${email.toLowerCase()}`;
 
   async generateOtp(email: string) {
     const rateKey = this.rateKey(email);
@@ -46,7 +46,7 @@ export class OtpService {
     //     email,
     //     code: hashed,
     //     expiresAt,
-    //   },
+    //   },rateLimit
     // });
 
     const templatePath = path.join('public', 'templates', 'otp', 'otp.ejs');

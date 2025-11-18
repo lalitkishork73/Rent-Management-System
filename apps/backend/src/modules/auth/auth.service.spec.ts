@@ -61,9 +61,9 @@ describe('AuthService', () => {
     it('should throw error if user already exists', async () => {
       prisma.user.findUnique = jest
         .fn()
-        .mockResolvedValue({ email: 'test@mail.com' });
+        .mockResolvedValue({ email: 'lalit@yopmail.com' });
 
-      await expect(service.signUp('test@mail.com', '123456')).rejects.toThrow(
+      await expect(service.signUp('lalit@yopmail.com', '123456')).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -72,14 +72,14 @@ describe('AuthService', () => {
       prisma.user.findUnique = jest.fn().mockResolvedValue(null);
       prisma.user.create = jest
         .fn()
-        .mockResolvedValue({ id: 1, email: 'test@mail.com' });
+        .mockResolvedValue({ id: 1, email: 'lalit@yopmail.com' });
       otp.generateOtp = jest.fn().mockResolvedValue(true);
       jest.spyOn(BcryptUtil, 'hashPassword').mockResolvedValue('hashed');
 
-      const result = await service.signUp('test@mail.com', 'password');
+      const result = await service.signUp('lalit@yopmail.com', 'password');
 
       expect(prisma.user.create).toHaveBeenCalled();
-      expect(otp.generateOtp).toHaveBeenCalledWith('test@mail.com');
+      expect(otp.generateOtp).toHaveBeenCalledWith('lalit@yopmail.com');
       expect(logger.log).toHaveBeenCalled();
       expect(result).toEqual({
         message: 'Signup successful, please verify OTP sent to your email',

@@ -1,26 +1,31 @@
-import { Injectable, LoggerService, Logger } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import type { LoggerService } from '@nestjs/common';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class AppLogger implements LoggerService {
-  private readonly logger = new Logger('App');
+  constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: LoggerService, // <-- important
+  ) {}
 
-  log(message: string) {
-    this.logger.log(message);
+  log(message: any, context?: string) {
+    this.logger.log(message, context);
   }
 
-  error(message: string, trace?: string) {
-    this.logger.error(message, trace);
+  error(message: any, stack?: string, context?: string) {
+    this.logger.error(message, stack, context);
   }
 
-  warn(message: string) {
-    this.logger.warn(message);
+  warn(message: any, context?: string) {
+    this.logger.warn(message, context);
   }
 
-  debug(message: string) {
-    this.logger.debug(message);
-  }
+  // debug(message: any, context?: string) {
+  //   this.logger.debug(message, context);
+  // }
 
-  verbose(message: string) {
-    this.logger.verbose(message);
-  }
+  // verbose(message: any, context?: string) {
+  //   this.logger.verbose(message, context);
+  // }
 }

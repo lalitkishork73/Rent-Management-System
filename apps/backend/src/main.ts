@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionsFilter } from './common/filters/http-exception/http-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { AppLogger } from './common/logger/logger.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,10 +14,14 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  const logger=app.get(AppLogger)
+  logger.log('app is running...')
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
 
   app.setGlobalPrefix('api/v1');
-  await app.listen(process.env.PORT ?? 5000);
+
+  await app.listen(process.env.PORT ?? 6000);
 }
 bootstrap();
