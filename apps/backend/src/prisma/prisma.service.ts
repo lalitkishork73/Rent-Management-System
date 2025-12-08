@@ -25,9 +25,9 @@ export class PrismaService
     try {
       await this.$connect();
       console.log('Prisma Postgres DB connected');
-      this.logger.log('Prisma Postgres DB connected');
+      // this.logger.log('Prisma Postgres DB connected');
     } catch (error) {
-      this.logger.log('Prisma connection failed:');
+      // this.logger.log('Prisma connection failed:');
       console.error('Prisma connection failed:', error.message);
     }
   }

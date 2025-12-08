@@ -6,7 +6,12 @@ import { LoggerModule } from '../../common/logger/logger.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { OtpModule } from '../otp/otp.module';
-
+import { SessionService } from './session.service';
+import { JwtAuthGuard } from './guards/jwt.guard';
+import { RolesGuard } from './guards/roles.guard';
+import { PermissionGuard } from './guards/permissions.guard';
+import { Authorization } from './authorization.service';
+import { GoogleOAuthService } from './google.service';
 @Module({
   imports: [
     OtpModule,
@@ -22,8 +27,16 @@ import { OtpModule } from '../otp/otp.module';
       }),
     }),
   ],
-  providers: [AuthService],
+  providers: [
+    AuthService,
+    SessionService,
+    JwtAuthGuard,
+    Authorization,
+    RolesGuard,
+    PermissionGuard,
+    GoogleOAuthService
+  ],
   controllers: [AuthController],
-  exports: [AuthService],
+  exports: [AuthService, SessionService, JwtAuthGuard,RolesGuard,PermissionGuard],
 })
 export class AuthModule {}

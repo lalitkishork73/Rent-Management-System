@@ -15,30 +15,39 @@ datasource db {
 // -------------------------
 
 model User {
-  id             String           @id @default(uuid())
-  email          String           @unique
-  password       String?          // nullable for OAuth users
-  isEmailVerified Boolean          @default(false)
-  name           String?
-  roles          UserRole[]       // many-to-many relationship
-  refreshTokens  RefreshToken[]
-  oauthAccounts  OAuthAccount[]
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id              String         @id @default(uuid())
+  email           String         @unique
+  password        String? // nullable for OAuth users
+  isEmailVerified Boolean        @default(false)
+  name            String?
+  roles           UserRole[] // many-to-many relationship
+  oauthAccounts   OAuthAccount[]
+  sessions        Session[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 model Role {
-  id          String        @id @default(uuid())
-  name        String        @unique
+  id          String  @id @default(uuid())
+  name        String  @unique
   description String?
+  roleType    String  @default("SYSTEM") // SYSTEM, INTERNAL, CUSTOM
+
   permissions RolePermission[]
   users       UserRole[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Permission {
-  id   String  @id @default(uuid())
-  name String  @unique
+  id   String @id @default(uuid())
+  name String @unique
+
   roles RolePermission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // -------------------------
@@ -51,40 +60,33 @@ model UserRole {
   userId String
   role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
   roleId String
+
+  @@unique([userId, roleId])
 }
 
 model RolePermission {
-  id            String      @id @default(uuid())
-  role          Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  roleId        String
-  permission    Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
-  permissionId  String
+  id           String     @id @default(uuid())
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId       String
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  permissionId String
 }
 
 // -------------------------
 // Auth Tokens
 // -------------------------
 
-model RefreshToken {
-  id         String   @id @default(uuid())
-  tokenHash  String   // hashed securely
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-}
-
 // -------------------------
 // One-Time Password (Ephemeral)
 // -------------------------
 
 model OTP {
-  id         String   @id @default(uuid())
-  email      String
-  code       String   // always store hashed (bcrypt)
-  createdAt  DateTime @default(now())
-  expiresAt  DateTime
-  used       Boolean  @default(false)
+  id        String   @id @default(uuid())
+  email     String
+  code      String // always store hashed (bcrypt)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  used      Boolean  @default(false)
 
   @@index([email])
   @@index([expiresAt])
@@ -95,13 +97,30 @@ model OTP {
 // -------------------------
 
 model OAuthAccount {
-  id            String   @id @default(uuid())
-  provider      String
-  providerId    String
-  accessToken   String?
-  refreshToken  String?
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String
+  id           String  @id @default(uuid())
+  provider     String
+  providerId   String
+  accessToken  String?
+  refreshToken String?
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
 
   @@unique([provider, providerId])
+}
+
+model Session {
+  id     String @id @default(uuid())
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  device    String?
+  userAgent String?
+  ip        String?
+
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  expiresAt  DateTime
+  revoked    Boolean  @default(false)
+
+  @@index([userId])
 }
