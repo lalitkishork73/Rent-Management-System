@@ -92,6 +92,15 @@ export class AuthController {
     return result;
   }
 
+  @Post('google/mobile')
+  async googleMobile(
+    @Body() idToken: string,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return await this.authService.handleGoogleMobileLogin(idToken, req, res);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async me(@CurrentUser() user: any) {

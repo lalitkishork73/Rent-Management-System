@@ -114,7 +114,7 @@ export class AuthService {
     await this.otpService.generateOtp(email);
 
     this.logger.log(`New user registered: ${email}`);
-
+    
     return {
       message: 'Signup successful, please verify OTP sent to your email',
     };
@@ -198,6 +198,75 @@ export class AuthService {
 
     // 5️⃣ Issue access/refresh tokens + session (same as normal login)
     return this.issueTokensForUser(user, clientType, req, res);
+  }
+
+  async handleGoogleMobileLogin(idToken: string, req: Request, res: Response) {
+
+
+    const googleuser = await this.googleOAuthService.verifyIdToken(idToken);
+
+  
+
+    const { googleId, email, name } = googleuser;
+
+    let oauthAccount = await this.prisma.oAuthAccount.findUnique({
+      where: {
+        provider_providerId: {
+          provider: 'google',
+          providerId: googleId,
+        },
+      },
+      include: { user: true },
+    });
+
+    let user;
+
+    if (oauthAccount?.user) user = oauthAccount.user;
+    else {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (existingUser) {
+        user = existingUser;
+      } else {
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            name,
+            password: null,
+            isEmailVerified: true,
+          },
+        });
+
+        const userRoleId = await this.getRoleId('USER');
+
+        await this.prisma.userRole.create({
+          data: {
+            userId: user.id,
+            roleId: userRoleId,
+          },
+        });
+
+        await this.prisma.oAuthAccount.upsert({
+          where: {
+            provider_providerId: {
+              provider: 'google',
+              providerId: googleId,
+            },
+          },
+          update: {
+            userId: user.id,
+          },
+          create: {
+            provider: 'google',
+            providerId: googleId,
+            userId: user.id,
+          },
+        });
+      }
+    }
+    return this.issueTokensForUser(user, 'mobile', req, res);
   }
 
   async login(dto: LoginDto, req: Request, res: Response) {

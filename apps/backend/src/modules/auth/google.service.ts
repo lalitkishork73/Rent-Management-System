@@ -47,4 +47,25 @@ export class GoogleOAuthService {
       tokens,
     };
   }
+
+  async verifyIdToken(idToken: string) {
+    const ticket = await this.client.verifyIdToken({
+      idToken,
+      audience: this.config.get<string>('GOOGLE_CLIENT_ID'),
+    });
+
+  
+
+    const payload = ticket.getPayload();
+
+    if (!payload?.email || !payload?.sub)
+      throw new Error('Invalid google token payload');
+
+    return {
+      googleId: payload.sub,
+      email: payload.email,
+      name: payload.name ?? null,
+      picture: payload.picture ?? null,
+    };
+  }
 }
