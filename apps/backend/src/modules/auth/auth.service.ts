@@ -49,8 +49,8 @@ export class AuthService {
 
     const payload = {
       sub: user.id,
-      email: user.email,
       rbac: rbac.roles,
+      email: user.email,
       permission: rbac.permissions,
     };
 
@@ -65,22 +65,34 @@ export class AuthService {
       expiresAt,
     });
 
+    const users = {
+      isEmailVerified: user.isEmailVerified,
+      email: user.email,
+      id: user.id,
+      name: user.name,
+      roles: user.roles,
+    };
+
     if (clientType === 'web') {
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: false, // true in production with HTTPS
-        sameSite: 'strict',
-        path: '/api/v1/auth/refresh', // match your real route
+        sameSite: 'lax',
+        path: '/api/v1', // match your real route
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
 
-      return { accessToken };
+      return {
+        accessToken,
+        user: users,
+      };
     }
 
     return {
       accessToken,
       refreshToken,
       sessionId: session.id,
+      user: users,
     };
   }
 
@@ -96,10 +108,10 @@ export class AuthService {
       throw new BadRequestException('User already exists');
     }
 
-    const hashedPasword = await BcryptUtil.hashPassword(password);
+    const hashedPassword = await BcryptUtil.hashPassword(password);
 
     const newUser = await this.prisma.user.create({
-      data: { email, password: hashedPasword },
+      data: { email, password: hashedPassword },
     });
 
     const userRoleId = await this.getRoleId('USER');
@@ -114,7 +126,7 @@ export class AuthService {
     await this.otpService.generateOtp(email);
 
     this.logger.log(`New user registered: ${email}`);
-    
+
     return {
       message: 'Signup successful, please verify OTP sent to your email',
     };
@@ -201,11 +213,7 @@ export class AuthService {
   }
 
   async handleGoogleMobileLogin(idToken: string, req: Request, res: Response) {
-
-
     const googleuser = await this.googleOAuthService.verifyIdToken(idToken);
-
-  
 
     const { googleId, email, name } = googleuser;
 
@@ -282,10 +290,8 @@ export class AuthService {
       throw new UnauthorizedException('Please login using OAuth provider');
     }
 
-    if (!user.isEmailVerified)
-      throw new UnauthorizedException(
-        'Please verify your email before logging in',
-      );
+    // if (!user.isEmailVerified)
+    //     res.status(401).json({message:'You are Email Is not '})
 
     const isPasswordValid = await BcryptUtil.comparePassword(
       password,
@@ -313,11 +319,13 @@ export class AuthService {
   }
 
   async refresh(req, res, clientType: 'web' | 'mobile') {
-    console.log(req.cookies);
     const oldRefreshToken =
       clientType === 'web'
         ? req.cookies['refreshToken']
         : req.body.refreshToken;
+
+
+     console.log(req.cookies)
 
     if (!oldRefreshToken)
       throw new UnauthorizedException('Missing refresh token');
@@ -328,32 +336,50 @@ export class AuthService {
 
     const { session, refreshToken } = rotated;
 
+    // const userSession=this.prisma.session.findUnique({
+    //   where:{id:session.id}
+    // })
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: session.userId,
+      },
+      select: {
+        email: true,
+        id: true,
+        name: true,
+      },
+    });
+
     const accessToken = this.jwtService.sign({
-      sub: session.id,
-      email: '',
+      sub: session.userId,
+      email: user?.email,
     });
 
     if (clientType === 'web') {
-      res.cookie('refreshToken', {
+      res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
-        path: '/api/v1/auth/refresh',
+        secure: false,
+        sameSite: 'lax',
+        path: '/api/v1',
         maxAge: 30 * 24 * 60 * 60 * 1000,
       });
 
-      return { accessToken };
+      return { accessToken,user };
     }
 
     return {
       accessToken,
       refreshToken,
       sessionId: session.id,
+      user
     };
   }
 
   async logout(dto: LogoutDto, req: Request, res: Response) {
     const clientType = dto.clientType ?? 'web';
+
+    console.log(req.cookies)
 
     const refreshToken =
       clientType === 'web' ? req.cookies?.['refreshToken'] : dto.refreshToken;
@@ -364,7 +390,10 @@ export class AuthService {
 
     if (!session) {
       if (clientType === 'web') {
-        res.clearCookie('refreshToken', { path: '/api/v1/auth/refresh' });
+        res.clearCookie('refreshToken',
+           { path: '/api/v1' , httpOnly: true,
+             sameSite: 'lax',
+            secure: false,});
       }
       return { message: 'Logged out' };
     }
@@ -372,8 +401,12 @@ export class AuthService {
     await this.session.revokeSession(session.id);
 
     if (clientType === 'web') {
-      res.clearCookie('refreshToken', { path: '/api/v1/auth/refresh' });
+      res.clearCookie('refreshToken',
+         { path: '/api/v1' , httpOnly: true,
+           sameSite: 'lax',
+           secure: false,});
     }
+    
 
     return { message: 'Logged out successfully' };
   }
@@ -406,3 +439,4 @@ export class AuthService {
     return { message: 'Logged out from all devices' };
   }
 }
+           

@@ -12,6 +12,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
+  isEmailVerified:boolean;
   roles: Role[];
 };
 

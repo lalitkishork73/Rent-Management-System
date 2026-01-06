@@ -22,6 +22,13 @@ export class OtpService {
   private readonly rateKey = (email: string) => `otp:rate:${email.toLowerCase()}`;
 
   async generateOtp(email: string) {
+
+    const isVerified=await this.prisma.user.findUnique({where:{email}});
+
+    if(isVerified?.isEmailVerified){
+      throw new Error('users already Verified Can not generate OTP')
+    }
+
     const rateKey = this.rateKey(email);
     const currentRate = await this.redisClint.incr(rateKey);
     if (currentRate === 1) {

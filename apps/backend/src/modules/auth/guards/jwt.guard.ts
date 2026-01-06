@@ -40,22 +40,32 @@ export class JwtAuthGuard implements CanActivate {
     const userId = payload.sub as string | undefined;
     const email = payload.email as string | undefined;
 
-    if (!userId || !email) {
+
+    if (!userId) {
       throw new UnauthorizedException('Invalid token payload');
     }
 
     const user = await this.prisma.user.findUnique({
-      where: { id: userId } ,
-      select: { id: true, email: true },
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        isEmailVerified: true,
+        roles: true,
+      },
     });
 
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    const requestUser: RequestUser = {
+    const requestUser: RequestUser | null = {
       id: user.id,
       email: user.email,
+      name: user.name,
+      isEmailVerified: user.isEmailVerified,
+      // roles:user.roles.id
     };
 
     request.user = requestUser;

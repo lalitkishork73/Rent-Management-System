@@ -191,7 +191,8 @@ export class SessionService {
     const data = await this.redis.get(key);
     if (!data) return null;
 
-    const parsed:any = JSON.stringify(data);
+    const parsed:any = JSON.parse(data);
+    console.log(parsed)
     const session = await this.prisma.session.findUnique({
       where: { id: parsed.sessionId },
       include: { user: true },

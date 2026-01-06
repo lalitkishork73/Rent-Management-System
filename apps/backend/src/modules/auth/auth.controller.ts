@@ -89,7 +89,9 @@ export class AuthController {
       'web',
     );
 
-    return result;
+
+    res.redirect(`${process.env.FRONTEND_URL}/home`)
+    // return result;
   }
 
   @Post('google/mobile')

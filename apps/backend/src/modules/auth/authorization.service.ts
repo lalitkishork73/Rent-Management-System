@@ -21,6 +21,8 @@ export class Authorization {
       },
     });
 
+    
+
     const roleNames = roles.map((r) => r.role.name);
 
     const permissionNames = roles.flatMap((r) =>
@@ -32,4 +34,5 @@ export class Authorization {
       permissions: [...new Set(permissionNames)],
     };
   }
+  
 }
