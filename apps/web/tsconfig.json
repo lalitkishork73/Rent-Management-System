@@ -5,7 +5,11 @@
       {
         "name": "next"
       }
-    ]
+    ],
+
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
   "include": [
     "**/*.ts",
@@ -13,7 +17,7 @@
     "next-env.d.ts",
     "next.config.js",
     ".next/types/**/*.ts"
-  ],
+, "vitest.config.mts"  ],
   "exclude": [
     "node_modules"
   ]
